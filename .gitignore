@@ -1,0 +1,13 @@
+*.sln
+*.swp
+*.db
+*.opendb
+*.vcxproj
+*.filters
+.vs
+bin
+Debug
+Dependencies
+obj
+packages
+camera2.cpp
