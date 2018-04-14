@@ -1,17 +1,3 @@
-/*
- 
-SPACEBAR - toggle FPS control
-W,A,S,D - to move
-mouse_button_callback - look around, inverted mouse_button_callback
-left/right mouse_button_callback - fly up/down
-ESC - quit
-
-*/
-
-//https://paroj.github.io/gltut/Positioning/Tut05%20Overlap%20and%20Depth%20Buffering.html
-//http://nghiaho.com/?p=1613
-//$ g++ main.cpp Camera.h Camera.cpp Hitbox.h -o test3 -Wall -lGL -lglut -lGLU
-
 #define _USE_MATH_DEFINES
 
 #include <GL/freeglut.h>
