@@ -11,7 +11,6 @@ void Camera::init()
 {
 	yaw = 0.0;
 	pitch = 0.0;
-
 	set_pos(0, 0, 0);
 }
 
@@ -43,18 +42,17 @@ void Camera::set_pos(float x, float y, float z)
 	pos_x = x;
 	pos_y = y;
 	pos_z = z;
-
 	refresh();
 }
 
-void Camera::get_pos(float &x, float &y, float &z)
+void Camera::get_pos(float& x, float& y, float& z)
 {
 	x = pos_x;
 	y = pos_y;
 	z = pos_z;
 }
 
-void Camera::get_direction(float &x, float &y, float &z)
+void Camera::get_direction(float& x, float& y, float& z)
 {
 	x = dir_x;
 	y = dir_y;
@@ -64,16 +62,15 @@ void Camera::get_direction(float &x, float &y, float &z)
 // TODO: movement speed independent of camera angle?
 void Camera::move_forward(float incr)
 {
-	float lx = cos(yaw)*cos(pitch);
-	float lz = sin(yaw)*cos(pitch);
+	float movement_x = cos(yaw)*cos(pitch);
+	float movement_z = sin(yaw)*cos(pitch);
 
 	// uncomment this to enable flying
-	//float ly = sin(m_pitch);
-	//pos_y = pos_y + incr*ly;
+	//float movement_y = sin(m_pitch);
+	//pos_y = pos_y + incr*movement_y;
 
-	pos_x = pos_x + incr*lx;
-	pos_z = pos_z + incr*lz;
-
+	pos_x = pos_x + incr*movement_x;
+	pos_z = pos_z + incr*movement_z;
 	refresh();
 }
 
@@ -81,47 +78,39 @@ void Camera::move_sideways(float incr)
 {
 	pos_x = pos_x + incr*dir_strafe_x;
 	pos_z = pos_z + incr*dir_strafe_z;
-
 	refresh();
 }
 
 void Camera::move_upwards(float incr)
 {
 	pos_y = pos_y + incr;
-
 	refresh();
 }
 
 void Camera::adjust_yaw(float angle)
 {
 	yaw += angle;
-
 	refresh();
 }
 
 void Camera::adjust_pitch(float angle)
 {
+	// we can't look directly up
 	const float limit = (float)(89.0 * M_PI / 180.0);
-
 	pitch -= angle;
-
 	if (pitch < -limit) pitch = -limit;
-
 	if (pitch > limit) pitch = limit;
-
 	refresh();
 }
 
 void Camera::set_yaw(float angle)
 {
 	yaw = angle;
-
 	refresh();
 }
 
 void Camera::set_pitch(float angle)
 {
 	pitch = angle;
-
 	refresh();
 }

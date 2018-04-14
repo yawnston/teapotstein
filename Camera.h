@@ -11,8 +11,8 @@ public:
 	void init();
 	void refresh();
 	void set_pos(float x, float y, float z);
-	void get_pos(float &x, float &y, float &z);
-	void get_direction(float &x, float &y, float &z);
+	void get_pos(float& x, float& y, float& z);
+	void get_direction(float& x, float& y, float& z);
 	void set_yaw(float angle);
 	void set_pitch(float angle);
 

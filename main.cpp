@@ -70,19 +70,19 @@ bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
 
 // Movement settings
-const float g_translation_speed = 0.05f;
-const float g_rotation_speed = (float)M_PI / 180 * 0.2f;
-const float g_enemy_speed = 0.05f;
-const float g_projectile_speed = 0.2f;
+const float player_movement_speed = 0.05f;
+const float player_turn_speed = (float)M_PI / 180 * 0.2f;
+const float enemy_movement_speed = 0.05f;
+const float projectile_movement_speed = 0.3f;
 
 int frame = 0, time_elapsed = 0, timebase = 0;
 char fpscount_buffer[32];
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
-	glutInitWindowSize(640, 480);
+	glutInitWindowSize(1280, 720);
 	glutCreateWindow("hello");
 
 	glEnable(GL_DEPTH_TEST);
@@ -158,8 +158,8 @@ void init_floor()
 	{
 		for (int j = 0; j < floor_size; ++j)
 		{
-			rand1 = (rand() % 4000 - 2000) / 20000.0;
-			rand2 = (rand() % 4000 - 2000) / 20000.0;
+			rand1 = (float)((rand() % 4000 - 2000) / 20000.0);
+			rand2 = (float)((rand() % 4000 - 2000) / 20000.0);
 			floor_color[i][j][0] = rand1 + 0.4f;
 			floor_color[i][j][1] = rand2 + 0.4f;
 		}
@@ -195,8 +195,9 @@ void floor()
 {
 	glPushMatrix();
 	glDisable(GL_LIGHTING);
-	glDisable(GL_CULL_FACE);
+	glFrontFace(GL_CW);
 
+	// real floor size is 2*floor_size by 2*floor_size, centered around (0,-0.5,0)
 	glBegin(GL_QUADS);
 	for (int i = 0; i < floor_size; ++i)
 	{
@@ -213,26 +214,36 @@ void floor()
 			glVertex3f((float)i - floor_size - 1, -0.5f, (float)j - 1);
 			glVertex3f((float)i - floor_size, -0.5f, (float)j - 1);
 			glVertex3f((float)i - floor_size, -0.5f, (float)j);
+
+			glVertex3f((float)i - 1, -0.5f, (float)j - floor_size);
+			glVertex3f((float)i - 1, -0.5f, (float)j - floor_size - 1);
+			glVertex3f((float)i, -0.5f, (float)j - floor_size - 1);
+			glVertex3f((float)i, -0.5f, (float)j - floor_size);
+
+			glVertex3f((float)i - floor_size - 1, -0.5f, (float)j - floor_size);
+			glVertex3f((float)i - floor_size - 1, -0.5f, (float)j - floor_size - 1);
+			glVertex3f((float)i - floor_size, -0.5f, (float)j - floor_size - 1);
+			glVertex3f((float)i - floor_size, -0.5f, (float)j - floor_size);
 		}
 	}
 	glEnd();
 	glEnable(GL_LIGHTING);
-	glEnable(GL_CULL_FACE);
 	glPopMatrix();
+	glFrontFace(GL_CCW);
 }
 
 void trees()
 {
 	glColor3f(0.0f, 1.0f, 0.0f);
 
-	for (int i = 1; i < 20; i += 3)
+	for (int i = -9; i < 10; i += 3)
 	{
-		for (int j = 1; j < 20; j += 3)
+		for (int j = -9; j < 10; j += 3)
 		{
 			glPushMatrix();
 			glColor3f(0.545f, 0.271f, 0.075f);
 
-			glTranslatef((float)i, 0, (float)j);
+			glTranslatef((float)i, -0.5f, (float)j);
 			glutSolidCube(0.2f);
 			glTranslatef(0, 0.2f, 0);
 			glutSolidCube(0.24f);
@@ -251,7 +262,7 @@ void skybox()
 {
 	glPushMatrix();
 	glLoadIdentity();
-	glDisable(GL_CULL_FACE);
+	glFrontFace(GL_CW);
 
 	float x, y, z;
 	main_camera.get_direction(x, y, z);
@@ -266,7 +277,7 @@ void skybox()
 	glDisable(GL_BLEND);
 
 	// Render the front quad
-	glColor4f(0.9, 0.6, 0.6, 1);
+	glColor4f(0.9f, 0.6f, 0.6f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex3f(0.5f, -0.5f, -0.5f);
 	glVertex3f(-0.5f, -0.5f, -0.5f);
@@ -275,7 +286,7 @@ void skybox()
 	glEnd();
 
 	// Render the left quad
-	glColor4f(0.8, 0.8, 0.8, 1);
+	glColor4f(0.8f, 0.8f, 0.8f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex3f(0.5f, -0.5f, 0.5f);
 	glVertex3f(0.5f, -0.5f, -0.5f);
@@ -284,7 +295,7 @@ void skybox()
 	glEnd();
 
 	// Render the back quad
-	glColor4f(0.6, 0.6, 0.6, 1);
+	glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex3f(-0.5f, -0.5f, 0.5f);
 	glVertex3f(0.5f, -0.5f, 0.5f);
@@ -293,7 +304,7 @@ void skybox()
 	glEnd();
 
 	// Render the right quad
-	glColor4f(0.5, 0.5, 0.5, 1);
+	glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex3f(-0.5f, -0.5f, -0.5f);
 	glVertex3f(-0.5f, -0.5f, 0.5f);
@@ -302,7 +313,7 @@ void skybox()
 	glEnd();
 
 	// Render the top quad
-	glColor4f(0.3, 0.3, 0.3, 1);
+	glColor4f(0.3f, 0.3f, 0.3f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex3f(-0.5f, 0.5f, -0.5f);
 	glVertex3f(-0.5f, 0.5f, 0.5f);
@@ -311,7 +322,7 @@ void skybox()
 	glEnd();
 
 	// Render the bottom quad
-	glColor4f(0.1, 0.1, 0.1, 1);
+	glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
 	glBegin(GL_QUADS);
 	glVertex3f(-0.5f, -0.5f, -0.5f);
 	glVertex3f(-0.5f, -0.5f, 0.5f);
@@ -321,7 +332,7 @@ void skybox()
 
 	glPopAttrib();
 	glPopMatrix();
-	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
 }
 
 void enemy_direction(int value)
@@ -338,8 +349,8 @@ void enemy_movement(int value)
 {
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
-		enemy_x[i] += enemy_heading[i][0] * g_enemy_speed;
-		enemy_y[i] += enemy_heading[i][1] * g_enemy_speed;
+		enemy_x[i] += enemy_heading[i][0] * enemy_movement_speed;
+		enemy_y[i] += enemy_heading[i][1] * enemy_movement_speed;
 		enemy_hitboxes[i].set_pos(enemy_x[i], 0, enemy_y[i]);
 	}
 	glutTimerFunc(50, enemy_movement, 2);
@@ -351,7 +362,7 @@ void projectile_movement(int value)
 	{
 		for (size_t j = 0; j < 3; ++j)
 		{
-			projectile_location[i][j] += projectile_heading[i][j] * g_projectile_speed;
+			projectile_location[i][j] += projectile_heading[i][j] * projectile_movement_speed;
 		}
 		projectile_hitboxes[i].set_pos(projectile_location[i][0], projectile_location[i][1], projectile_location[i][2]);
 	}
@@ -409,6 +420,7 @@ void refresh_enemy_invulnerability(int value)
 
 void show_enemies()
 {
+	glFrontFace(GL_CW);
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
 		if (enemy_health[i] == 3) glColor3f(0.9f, 0.1f, 0.1f);
@@ -422,7 +434,7 @@ void show_enemies()
 		glPopMatrix();
 
 		// show enemy hitboxes
-		glDisable(GL_CULL_FACE);
+		
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
 		float x, y, z;
@@ -430,8 +442,8 @@ void show_enemies()
 		glTranslatef(x, y, z);
 		glutWireSphere(enemy_size, 10, 10);
 		glPopMatrix();
-		glEnable(GL_CULL_FACE);
 	}
+	glFrontFace(GL_CCW);
 }
 
 void show_projectiles()
@@ -542,7 +554,7 @@ void reshape_callback(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 
 	glLoadIdentity();
-	gluPerspective(60, (GLfloat)w / (GLfloat)h, 0.1, 100.0);
+	gluPerspective(75, (GLfloat)w / (GLfloat)h, 0.1, 100.0);
 
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -592,19 +604,19 @@ void movement_timer_callback(int value)
 	{
 		if (input_keys['w'] || input_keys['W'])
 		{
-			main_camera.move_forward(g_translation_speed);
+			main_camera.move_forward(player_movement_speed);
 		}
 		if (input_keys['s'] || input_keys['S'])
 		{
-			main_camera.move_forward(-g_translation_speed);
+			main_camera.move_forward(-player_movement_speed);
 		}
 		if (input_keys['a'] || input_keys['A'])
 		{
-			main_camera.move_sideways(g_translation_speed);
+			main_camera.move_sideways(player_movement_speed);
 		}
 		if (input_keys['d'] || input_keys['D'])
 		{
-			main_camera.move_sideways(-g_translation_speed);
+			main_camera.move_sideways(-player_movement_speed);
 		}
 		if (input_mouse_left_down)
 		{
@@ -612,7 +624,7 @@ void movement_timer_callback(int value)
 		}
 		if (input_mouse_right_down)
 		{
-			main_camera.move_upwards(g_translation_speed);
+			main_camera.move_upwards(player_movement_speed);
 		}
 	}
 
@@ -668,14 +680,15 @@ void mouse_motion_callback(int x, int y)
 
 		if (dx)
 		{
-			main_camera.adjust_yaw(g_rotation_speed*dx);
+			main_camera.adjust_yaw(player_turn_speed*dx);
 		}
 
 		if (dy)
 		{
-			main_camera.adjust_pitch(g_rotation_speed*dy);
+			main_camera.adjust_pitch(player_turn_speed*dy);
 		}
 
+		// teleport the invisible cursor to the middle of the screen to prevent it from leaving the window in FPS mode
 		glutWarpPointer(viewport_width / 2, viewport_height / 2);
 
 		just_warped = true;
