@@ -14,7 +14,7 @@ public:
 		float dz = this->z - hb.z;
 		float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-		if(distance <= this->radius + hb.radius) return true;
+		if (distance <= this->radius + hb.radius) return true;
 		return false;
 	}
 
@@ -30,16 +30,16 @@ public:
 
 	Hitbox()
 	{
-		set_pos(0,0,0);
+		set_pos(0, 0, 0);
 	}
 
-	Hitbox(float a, float b, float c, float r) 
+	Hitbox(float a, float b, float c, float r)
 	{
-		set_pos(a,b,c);
+		set_pos(a, b, c);
 		radius = r;
 	}
 private:
-	float x,y,z;
+	float x, y, z;
 	float radius;
 };
 

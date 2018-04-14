@@ -6,13 +6,13 @@ class Camera
 {
 public:
 	Camera() { init(); }
-	~Camera(){}
+	~Camera() {}
 
 	void init();
 	void refresh();
 	void set_pos(float x, float y, float z);
-    void get_pos(float &x, float &y, float &z);
-    void get_direction(float &x, float &y, float &z);
+	void get_pos(float &x, float &y, float &z);
+	void get_direction(float &x, float &y, float &z);
 	void set_yaw(float angle);
 	void set_pitch(float angle);
 
@@ -23,10 +23,10 @@ public:
 	void adjust_pitch(float angle);
 
 private:
-	float m_x, m_y, m_z;   // Position
-    float m_lx, m_ly, m_lz; // Direction vector of where we are looking at
-	float m_yaw, m_pitch; // Various rotation angles
-	float m_strafe_lx, m_strafe_lz; // Always 90 degree to direction vector
+	float pos_x, pos_y, pos_z;   // camera position
+	float dir_x, dir_y, dir_z; // camera direction vector
+	float yaw, pitch; // rotation angles
+	float dir_strafe_x, dir_strafe_z; // direction vectors for strafing
 };
 
 #endif
