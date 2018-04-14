@@ -24,7 +24,9 @@ void idle_callback();
 
 void init_enemies();
 void init_projectiles();
+void init_floor();
 void grid();
+void floor();
 void enemy_movement(int value);
 void enemy_direction(int value);
 void projectile_movement(int value);
@@ -45,6 +47,9 @@ bool input_mouse_right_down = false;
 
 GLfloat light_main_pos[] = { 5.0f, 0.0f, 5.0f, 0.0f };
 GLfloat light_ambient_pos[] = { 0.8f, 0.4f, 0.0f, 1.0f };
+
+const int floor_size = 15;
+float floor_color[floor_size][floor_size][2];
 
 const size_t enemy_count = 8;
 float enemy_x[enemy_count];
@@ -97,11 +102,12 @@ int main(int argc, char **argv)
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 	glEnable(GL_CULL_FACE);
-	glFrontFace(GL_CW);
-	glCullFace(GL_FRONT);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_BACK);
 
 	init_enemies();
 	init_projectiles();
+	init_floor();
 
 	glutIgnoreKeyRepeat(1);
 
@@ -144,6 +150,22 @@ void init_projectiles()
 	projectile_heading = vector<array<float, 3>>();
 }
 
+void init_floor()
+{
+	float rand1, rand2;
+
+	for (int i = 0; i < floor_size; ++i)
+	{
+		for (int j = 0; j < floor_size; ++j)
+		{
+			rand1 = (rand() % 4000 - 2000) / 20000.0;
+			rand2 = (rand() % 4000 - 2000) / 20000.0;
+			floor_color[i][j][0] = rand1 + 0.4f;
+			floor_color[i][j][1] = rand2 + 0.4f;
+		}
+	}
+}
+
 void grid()
 {
 	glPushMatrix();
@@ -166,6 +188,36 @@ void grid()
 		glEnd();
 	}
 	glEnable(GL_LIGHTING);
+	glPopMatrix();
+}
+
+void floor()
+{
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_CULL_FACE);
+
+	glBegin(GL_QUADS);
+	for (int i = 0; i < floor_size; ++i)
+	{
+		for (int j = 0; j < floor_size; ++j)
+		{
+			glColor3f(floor_color[i][j][0], floor_color[i][j][1], 0.14f);
+
+			glVertex3f((float)i - 1, -0.5f, (float)j);
+			glVertex3f((float)i - 1, -0.5f, (float)j - 1);
+			glVertex3f((float)i, -0.5f, (float)j - 1);
+			glVertex3f((float)i, -0.5f, (float)j);
+
+			glVertex3f((float)i - floor_size - 1, -0.5f, (float)j);
+			glVertex3f((float)i - floor_size - 1, -0.5f, (float)j - 1);
+			glVertex3f((float)i - floor_size, -0.5f, (float)j - 1);
+			glVertex3f((float)i - floor_size, -0.5f, (float)j);
+		}
+	}
+	glEnd();
+	glEnable(GL_LIGHTING);
+	glEnable(GL_CULL_FACE);
 	glPopMatrix();
 }
 
@@ -200,7 +252,7 @@ void skybox()
 	glPushMatrix();
 	glLoadIdentity();
 	glDisable(GL_CULL_FACE);
-	
+
 	float x, y, z;
 	main_camera.get_direction(x, y, z);
 	gluLookAt(
@@ -267,7 +319,6 @@ void skybox()
 	glVertex3f(0.5f, -0.5f, -0.5f);
 	glEnd();
 
-	// Restore enable bits and matrix
 	glPopAttrib();
 	glPopMatrix();
 	glEnable(GL_CULL_FACE);
@@ -450,7 +501,8 @@ void display(void)
 
 	glColor3f(0, 1, 0);
 
-	grid();
+	//grid();
+	floor();
 	trees();
 	show_enemies();
 	show_projectiles();
