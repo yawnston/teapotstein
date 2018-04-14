@@ -10,10 +10,12 @@ OpenGL, GLU and Freeglut are required
 
 ## Controls
 
+* Space to toggle between FPS controls and free mouse
 * WASD to move around
 * Mouse to look around
 * Left click to shoot
 * Right click to fly (debugging feature, not part of gameplay)
+* ESC to close the game
 
 ## Gameplay
 
