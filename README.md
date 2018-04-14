@@ -21,17 +21,17 @@ The following are functional:
 
 * Full movement and camera control
 * Shooting and damaging enemies
+* Hitboxes
 * Lighting and rendering simple objects
 * Random enemy movement
 * Skybox and floor(randomly tinted brown-greenish tiles)
 
 ## TODO list
 
-* Enemies shooting at the player and dealing damage to them
-* Enemies moving towards the player
+* Enemies shooting at the player
+* Enemies moving towards the player and dealing contact damage
 * Despawning old or dead objects (currently enemies and projectiles never disappear)
 * Small visual effects (bullet trails, impact effects)
-* Player health and HUD (currently the only part of the HUD implemented is the FPS counter)
 * Make the world prettier with more objects
 
 
