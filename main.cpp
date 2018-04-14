@@ -195,6 +195,84 @@ void trees()
 	}
 }
 
+void skybox()
+{
+	glPushMatrix();
+	glLoadIdentity();
+	glDisable(GL_CULL_FACE);
+	
+	float x, y, z;
+	main_camera.get_direction(x, y, z);
+	gluLookAt(
+		0, 0, 0,
+		x, y, z,
+		0, 1, 0);
+
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_BLEND);
+
+	// Render the front quad
+	glColor4f(0.9, 0.6, 0.6, 1);
+	glBegin(GL_QUADS);
+	glVertex3f(0.5f, -0.5f, -0.5f);
+	glVertex3f(-0.5f, -0.5f, -0.5f);
+	glVertex3f(-0.5f, 0.5f, -0.5f);
+	glVertex3f(0.5f, 0.5f, -0.5f);
+	glEnd();
+
+	// Render the left quad
+	glColor4f(0.8, 0.8, 0.8, 1);
+	glBegin(GL_QUADS);
+	glVertex3f(0.5f, -0.5f, 0.5f);
+	glVertex3f(0.5f, -0.5f, -0.5f);
+	glVertex3f(0.5f, 0.5f, -0.5f);
+	glVertex3f(0.5f, 0.5f, 0.5f);
+	glEnd();
+
+	// Render the back quad
+	glColor4f(0.6, 0.6, 0.6, 1);
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5f, -0.5f, 0.5f);
+	glVertex3f(0.5f, -0.5f, 0.5f);
+	glVertex3f(0.5f, 0.5f, 0.5f);
+	glVertex3f(-0.5f, 0.5f, 0.5f);
+	glEnd();
+
+	// Render the right quad
+	glColor4f(0.5, 0.5, 0.5, 1);
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5f, -0.5f, -0.5f);
+	glVertex3f(-0.5f, -0.5f, 0.5f);
+	glVertex3f(-0.5f, 0.5f, 0.5f);
+	glVertex3f(-0.5f, 0.5f, -0.5f);
+	glEnd();
+
+	// Render the top quad
+	glColor4f(0.3, 0.3, 0.3, 1);
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5f, 0.5f, -0.5f);
+	glVertex3f(-0.5f, 0.5f, 0.5f);
+	glVertex3f(0.5f, 0.5f, 0.5f);
+	glVertex3f(0.5f, 0.5f, -0.5f);
+	glEnd();
+
+	// Render the bottom quad
+	glColor4f(0.1, 0.1, 0.1, 1);
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5f, -0.5f, -0.5f);
+	glVertex3f(-0.5f, -0.5f, 0.5f);
+	glVertex3f(0.5f, -0.5f, 0.5f);
+	glVertex3f(0.5f, -0.5f, -0.5f);
+	glEnd();
+
+	// Restore enable bits and matrix
+	glPopAttrib();
+	glPopMatrix();
+	glEnable(GL_CULL_FACE);
+}
+
 void enemy_direction(int value)
 {
 	for (size_t i = 0; i < enemy_count; ++i)
@@ -293,6 +371,7 @@ void show_enemies()
 		glPopMatrix();
 
 		// show enemy hitboxes
+		glDisable(GL_CULL_FACE);
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
 		float x, y, z;
@@ -300,7 +379,7 @@ void show_enemies()
 		glTranslatef(x, y, z);
 		glutWireSphere(enemy_size, 10, 10);
 		glPopMatrix();
-
+		glEnable(GL_CULL_FACE);
 	}
 }
 
@@ -366,6 +445,8 @@ void display(void)
 	glLoadIdentity();
 
 	main_camera.refresh();
+
+	skybox();
 
 	glColor3f(0, 1, 0);
 
