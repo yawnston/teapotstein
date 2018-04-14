@@ -23,7 +23,7 @@ The following are functional:
 * Shooting and damaging enemies
 * Lighting and rendering simple objects
 * Random enemy movement
-* Skybox and floor(randomly tinted brown-greenish tiles) - this causes framerate drops for some reason
+* Skybox and floor(randomly tinted brown-greenish tiles)
 
 ## TODO list
 
