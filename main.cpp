@@ -34,7 +34,9 @@ void refresh_fire_cooldown(int value);
 void refresh_enemy_invulnerability(int value);
 void damage_enemy(size_t enemy);
 void check_projectile_collision();
-void display_text(float x, float y, int r, int g, int b, const char* string);
+void display_text(float x, float y, unsigned char r, unsigned char g, unsigned char b, const char* string);
+void set_ortho_projection();
+void restore_perspective_projection();
 
 Camera main_camera;
 bool input_keys[256];
@@ -68,6 +70,13 @@ vector<Hitbox> projectile_hitboxes;
 const float projectile_size = 0.05f;
 bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
+
+const float player_max_health = 200;
+float player_health = player_max_health;
+Hitbox player_hitbox;
+const float player_hitbox_size = 0.15f;
+bool player_invulnerability;
+const size_t player_invulnerability_length = 500; // in miliseconds
 
 // Movement settings
 const float player_movement_speed = 0.05f;
@@ -148,6 +157,15 @@ void init_projectiles()
 {
 	projectile_location = vector<array<float, 3>>();
 	projectile_heading = vector<array<float, 3>>();
+}
+
+void init_player()
+{
+	float x, y, z;
+	main_camera.get_pos(x, y, z);
+	player_hitbox = Hitbox(x, y, z, player_hitbox_size);
+	player_health = player_max_health;
+	player_invulnerability = false;
 }
 
 void init_floor()
@@ -434,7 +452,7 @@ void show_enemies()
 		glPopMatrix();
 
 		// show enemy hitboxes
-		
+
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
 		float x, y, z;
@@ -443,7 +461,18 @@ void show_enemies()
 		glutWireSphere(enemy_size, 10, 10);
 		glPopMatrix();
 	}
+
+#if HITBOX_DEBUG
+	// show player hitbox
+	glColor3f(0.0f, 0.9f, 0.1f);
+	glPushMatrix();
+	float x, y, z;
+	main_camera.get_pos(x, y, z);
+	glTranslatef(x, y, z);
+	glutWireSphere(player_hitbox_size, 10, 10);
+	glPopMatrix();
 	glFrontFace(GL_CCW);
+#endif
 }
 
 void show_projectiles()
@@ -470,19 +499,49 @@ void show_projectiles()
 
 }
 
-void display_text(float x, float y, int r, int g, int b, const char* string)
+void display_text(float x, float y, unsigned char r, unsigned char g, unsigned char b, const char* string)
 {
 	const char* c;
 	float pos = x;
 	int spacing = 10;
 
+	glColor3ub(r, g, b);
+
 	for (c = string; *c != '\0'; ++c)
 	{
-
 		glRasterPos2f(pos, y);
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 		pos = pos + glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c) + spacing;
 	}
+}
+
+void display_hud()
+{
+	set_ortho_projection();
+
+	glDisable(GL_CULL_FACE);
+	glPushMatrix();
+	glLoadIdentity();
+	glDisable(GL_LIGHTING);
+
+	const int numDiv = 15;
+	const float sep = 2.0f;
+	const float barHeight = 75.0f / (float)numDiv;
+	glBegin(GL_QUADS);
+	glColor3f(1, 0, 0);
+	for (float i = 0; i < player_health; i += (sep + barHeight))
+	{
+		glVertex2f((float)(viewport_width - 80), (float)(i));
+		glVertex2f((float)(viewport_width), (float)(i));
+		glVertex2f((float)(viewport_width), (float)(i + barHeight));
+		glVertex2f((float)(viewport_width - 80), (float)(i + barHeight));
+	}
+	glEnd();
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	restore_perspective_projection();
 }
 
 void set_ortho_projection()
@@ -518,6 +577,7 @@ void display(void)
 	trees();
 	show_enemies();
 	show_projectiles();
+	display_hud();
 
 	//calculate the frames per second
 	frame++;
@@ -535,7 +595,7 @@ void display(void)
 	glPushMatrix();
 	glLoadIdentity();
 	glDisable(GL_LIGHTING);
-	display_text(5, 30, 100, 30, 100, fpscount_buffer);
+	display_text(5, 30, 255, 255, 51, fpscount_buffer);
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
 
