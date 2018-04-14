@@ -23,6 +23,7 @@ The following are functional:
 * Shooting and damaging enemies
 * Lighting and rendering simple objects
 * Random enemy movement
+* Skybox and floor(randomly tinted brown-greenish tiles) - this causes framerate drops for some reason
 
 ## TODO list
 
@@ -31,7 +32,7 @@ The following are functional:
 * Despawning old or dead objects (currently enemies and projectiles never disappear)
 * Small visual effects (bullet trails, impact effects)
 * Player health and HUD (currently the only part of the HUD implemented is the FPS counter)
-* Make the world look pretty (replace the debugging grid floor with a real floor and maybe some more objects)
+* Make the world prettier with more objects
 
 
 *this is a project for my C++ lab at MFF CUNI*
