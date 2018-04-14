@@ -2,6 +2,12 @@
 ##### an OpenGL FPS where you shoot teapots at teapots and the teapots shoot teapots back at you
 
 
+## How to get this to run
+
+OpenGL, GLU and Freeglut are required  
+**UNIX**: compile with `g++ main.cpp Camera.h Camera.cpp Hitbox.h -o teapotstein -lGL -lglut -lGLU` and run with `./teapotstein`  
+**Windows**: this repo contains packages.config, add the source files to a VS project and compile with the NuGet packages
+
 ## Controls
 
 * WASD to move around
