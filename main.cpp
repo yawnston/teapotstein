@@ -355,6 +355,7 @@ void skybox()
 
 void enemy_direction(int value)
 {
+	if(value != 1) return;
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
 		enemy_heading[i][0] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
@@ -365,6 +366,7 @@ void enemy_direction(int value)
 
 void enemy_movement(int value)
 {
+	if(value != 2) return;
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
 		enemy_x[i] += enemy_heading[i][0] * enemy_movement_speed;
@@ -376,6 +378,7 @@ void enemy_movement(int value)
 
 void projectile_movement(int value)
 {
+	if(value != 3) return;
 	for (size_t i = 0; i < projectile_location.size(); ++i)
 	{
 		for (size_t j = 0; j < 3; ++j)
@@ -585,7 +588,7 @@ void display(void)
 	//check if a second has passed
 	if (currenttime - timebase > 1000)
 	{
-		sprintf_s(fpscount_buffer, "FPS: %4.2f", frame*1000.0 / (currenttime - timebase));
+		sprintf(fpscount_buffer, "FPS: %4.2f", frame*1000.0 / (currenttime - timebase));
 		timebase = currenttime;
 		frame = 0;
 	}
