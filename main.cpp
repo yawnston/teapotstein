@@ -73,6 +73,7 @@ const size_t fire_rate = 500; // in miliseconds
 
 const float player_max_health = 200;
 float player_health = player_max_health;
+int player_score = 0;
 Hitbox player_hitbox;
 const float player_hitbox_size = 0.15f;
 bool player_invulnerability;
@@ -396,7 +397,7 @@ void fire_projectile()
 	if (fire_cooldown == true) return;
 	float x, y, z;
 	float hx, hy, hz;
-	main_camera.get_pos(x, y, z); // TODO: are y and z switched? are coords correct?
+	main_camera.get_pos(x, y, z);
 	main_camera.get_direction(hx, hy, hz);
 	array<float, 3> p{ 0, 0, 0 }; p[0] = x; p[1] = y; p[2] = z;
 	array<float, 3> h{ 0, 0, 0 }; h[0] = hx; h[1] = hy; h[2] = hz;
@@ -425,10 +426,26 @@ void check_projectile_collision()
 	}
 }
 
+// despawn the given enemy and replace it with a new one
+void destroy_enemy(size_t enemy)
+{
+	srand((size_t)time(NULL)); // seed generator
+	enemy_x[enemy] = enemy_y[enemy] = (float)enemy; // FIXME: generate random position to spawn
+	enemy_heading[enemy][0] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
+	enemy_heading[enemy][1] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
+	enemy_health[enemy] = enemy_max_health;
+	enemy_hitboxes[enemy] = Hitbox(enemy_x[enemy], 0, enemy_y[enemy], enemy_size);
+	++player_score;
+}
+
 void damage_enemy(size_t enemy)
 {
 	if (enemy_invulnerability[enemy]) return; // don't do anything if the enemy is recently damaged
 	if (enemy_health[enemy] > 0) enemy_health[enemy]--;
+	if(enemy_health[enemy] == 0)
+	{
+		destroy_enemy(enemy);
+	}
 	enemy_invulnerability[enemy] = true;
 	glutTimerFunc(enemy_invulnerability_length, refresh_enemy_invulnerability, enemy);
 }
@@ -599,6 +616,7 @@ void display(void)
 	glLoadIdentity();
 	glDisable(GL_LIGHTING);
 	display_text(5, 30, 255, 255, 51, fpscount_buffer);
+	display_text(viewport_width / 2, 30, 255, 255, 51, ("SCORE: " + to_string(player_score)).c_str());
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -663,6 +681,7 @@ void keyboard_release_callback(unsigned char key, int x, int y)
 
 void movement_timer_callback(int value)
 {
+	if(value != 0) return;
 	if (input_fps_mode)
 	{
 		if (input_keys['w'] || input_keys['W'])
