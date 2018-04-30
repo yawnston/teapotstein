@@ -130,9 +130,9 @@ int main(int argc, char** argv)
 	glutIdleFunc(idle_callback);
 
 	glutTimerFunc(1, movement_timer_callback, 0);
-	glutTimerFunc(50, enemy_movement, 2);
+	glutTimerFunc(5, enemy_movement, 2);
 	glutTimerFunc(500, enemy_direction, 1);
-	glutTimerFunc(50, projectile_movement, 3);
+	glutTimerFunc(5, projectile_movement, 3);
 
 	glutMainLoop();
 
@@ -375,7 +375,7 @@ void enemy_movement(int value)
 		enemy_y[i] += enemy_heading[i][1] * enemy_movement_speed;
 		enemy_hitboxes[i].set_pos(enemy_x[i], 0, enemy_y[i]);
 	}
-	glutTimerFunc(50, enemy_movement, 2);
+	glutTimerFunc(5, enemy_movement, 2);
 }
 
 void projectile_movement(int value)
@@ -396,7 +396,7 @@ void projectile_movement(int value)
 	}
 
 	check_projectile_collision();
-	glutTimerFunc(50, projectile_movement, 3);
+	glutTimerFunc(5, projectile_movement, 3);
 }
 
 void fire_projectile()

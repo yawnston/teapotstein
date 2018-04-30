@@ -11,9 +11,9 @@ public:
 	std::array<float, 3> location;
 	std::array<float, 3> heading;
 
-	static constexpr float movement_speed = 0.3f;
+	static constexpr float movement_speed = 0.09f;
 	static constexpr float size = 0.05f;
-	static constexpr float max_lifetime = 150.0f; // lifetime is 150 frames
+	static constexpr float max_lifetime = 1000.0f; // lifetime is 150 frames
 
 	void decrease_lifetime(float d)
 	{
