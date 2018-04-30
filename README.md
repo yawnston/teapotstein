@@ -23,6 +23,7 @@ The following are functional:
 
 * Full movement and camera control
 * Shooting and damaging enemies
+* Score counter for killing enemies
 * Projectiles with a limited lifetime
 * Hitboxes
 * Lighting and rendering simple objects
