@@ -7,9 +7,11 @@
 #include <ctime>
 #include <vector>
 #include <array>
+#include <deque>
 
 #include "Camera.h"
 #include "Hitbox.h"
+#include "Projectile.h"
 
 using namespace std;
 
@@ -64,10 +66,7 @@ const size_t enemy_max_health = 3;
 bool enemy_invulnerability[enemy_count];
 const size_t enemy_invulnerability_length = 500; // in miliseconds
 
-vector<array<float, 3>> projectile_location; // TODO: replace with deque to remove old projectiles? -> projectile age
-vector<array<float, 3>> projectile_heading;
-vector<Hitbox> projectile_hitboxes;
-const float projectile_size = 0.05f;
+deque<Projectile> active_projectiles;
 bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
 
@@ -83,7 +82,6 @@ const size_t player_invulnerability_length = 500; // in miliseconds
 const float player_movement_speed = 0.05f;
 const float player_turn_speed = (float)M_PI / 180 * 0.2f;
 const float enemy_movement_speed = 0.05f;
-const float projectile_movement_speed = 0.3f;
 
 int frame = 0, time_elapsed = 0, timebase = 0;
 char fpscount_buffer[32];
@@ -156,8 +154,11 @@ void init_enemies()
 
 void init_projectiles()
 {
+	/*
 	projectile_location = vector<array<float, 3>>();
 	projectile_heading = vector<array<float, 3>>();
+	*/
+	active_projectiles = deque<Projectile>();
 }
 
 void init_player()
@@ -380,14 +381,20 @@ void enemy_movement(int value)
 void projectile_movement(int value)
 {
 	if(value != 3) return;
-	for (size_t i = 0; i < projectile_location.size(); ++i)
+
+	for(auto&& p : active_projectiles)
 	{
-		for (size_t j = 0; j < 3; ++j)
-		{
-			projectile_location[i][j] += projectile_heading[i][j] * projectile_movement_speed;
-		}
-		projectile_hitboxes[i].set_pos(projectile_location[i][0], projectile_location[i][1], projectile_location[i][2]);
+		p.move();
+		p.decrease_lifetime(1.0f);
 	}
+
+	// remove dead projectiles from the active deque (oldest projectiles are always at the front)
+	while(true)
+	{
+		if(active_projectiles.size() == 0 || !(active_projectiles.front().is_dead())) break;
+		active_projectiles.pop_front();
+	}
+
 	check_projectile_collision();
 	glutTimerFunc(50, projectile_movement, 3);
 }
@@ -399,11 +406,8 @@ void fire_projectile()
 	float hx, hy, hz;
 	main_camera.get_pos(x, y, z);
 	main_camera.get_direction(hx, hy, hz);
-	array<float, 3> p{ 0, 0, 0 }; p[0] = x; p[1] = y; p[2] = z;
-	array<float, 3> h{ 0, 0, 0 }; h[0] = hx; h[1] = hy; h[2] = hz;
-	projectile_location.push_back(p);
-	projectile_heading.push_back(h);
-	projectile_hitboxes.push_back(Hitbox(x, y, z, projectile_size));
+	
+	active_projectiles.push_back(Projectile(x,y,z,hx,hy,hz));
 
 	fire_cooldown = true;
 	glutTimerFunc(fire_rate, refresh_fire_cooldown, 4);
@@ -411,16 +415,17 @@ void fire_projectile()
 
 void refresh_fire_cooldown(int value)
 {
+	if(value != 4) return;	
 	fire_cooldown = false;
 }
 
 void check_projectile_collision()
 {
-	for (auto&& projectile : projectile_hitboxes)
+	for(auto&& p : active_projectiles)
 	{
 		for (size_t j = 0; j < enemy_count; ++j)
 		{
-			bool result = projectile.check_collision(enemy_hitboxes[j]);
+			bool result = p.hitbox.check_collision(enemy_hitboxes[j]);
 			if (result) damage_enemy(j);
 		}
 	}
@@ -497,13 +502,12 @@ void show_enemies()
 
 void show_projectiles()
 {
-
-	for (size_t i = 0; i < projectile_location.size(); ++i)
+	for(auto&& p : active_projectiles)
 	{
 		glColor3f(0.2f, 0.1f, 0.8f);
 		// show projectiles as teapots
 		glPushMatrix();
-		glTranslatef(projectile_location[i][0], projectile_location[i][1], projectile_location[i][2]);
+		glTranslatef(p.location[0], p.location[1], p.location[2]);
 		glutSolidTeapot(0.05);
 		glPopMatrix();
 
@@ -511,12 +515,11 @@ void show_projectiles()
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
 		float x, y, z;
-		projectile_hitboxes[i].get_pos(x, y, z);
+		p.hitbox.get_pos(x, y, z);
 		glTranslatef(x, y, z);
-		glutWireSphere(projectile_size, 10, 10);
+		glutWireSphere(Projectile::size, 10, 10);
 		glPopMatrix();
 	}
-
 }
 
 void display_text(float x, float y, unsigned char r, unsigned char g, unsigned char b, const char* string)
