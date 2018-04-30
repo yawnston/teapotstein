@@ -36,6 +36,7 @@ void refresh_fire_cooldown(int value);
 void refresh_enemy_invulnerability(int value);
 void damage_enemy(size_t enemy);
 void check_projectile_collision();
+void check_enemy_projectile_collision();
 void display_text(float x, float y, unsigned char r, unsigned char g, unsigned char b, const char* string);
 void set_ortho_projection();
 void restore_perspective_projection();
@@ -136,8 +137,6 @@ int main(int argc, char** argv)
 	glutTimerFunc(5, enemy_movement, 2);
 	glutTimerFunc(500, enemy_direction, 1);
 	glutTimerFunc(5, projectile_movement, 3);
-	glutTimerFunc(5, enemy_projectile_movement, 5);
-
 	glutMainLoop();
 
 	return 0;
@@ -368,6 +367,7 @@ void enemy_direction(int value)
 	glutTimerFunc(500, enemy_direction, 1);
 }
 
+// FIXME: enemies are able to leave the game space
 void enemy_movement(int value)
 {
 	if(value != 2) return;
@@ -388,14 +388,19 @@ void enemy_fire_projectile(size_t enemy)
 	float px, py, pz;
 	float phx, phy, phz;
 	main_camera.get_pos(px, py, pz);
-	main_camera.get_direction(phx, phy, phz);
-
-}
-
-void enemy_projectile_movement(int value)
-{
-	if(value != 5) return;
-	// TODO: enemy projectiles
+	main_camera.get_direction(phx, phy, phz);	
+	// TODO: figure out how enemy x and enemy y translates to x,y,z (y axis will be 0 but maybe x and z are swapped?)
+	float dx, dy, dz;
+	dx = px - enemy_x[enemy];
+	dy = 0;
+	dz = pz - enemy_y[enemy];
+	// normalize direction vector
+	float nx, ny, nz;
+	// TODO: normalize
+	
+	enemy_projectiles.push_back(Projectile(enemy_x[enemy], 0.5f, enemy_y[enemy], nx, ny, nz));
+	enemy_fire_cooldown[enemy] = true;
+	glutTimerFunc(/*TODO: randomize fire rate for enemies*/, refresh_enemy_fire_cooldown, 5);
 }
 
 void projectile_movement(int value)
@@ -407,6 +412,12 @@ void projectile_movement(int value)
 		p.move();
 		p.decrease_lifetime(1.0f);
 	}
+	for(auto&& p : enemy_projectiles)
+	{
+		p.move();
+		p.decrease_lifetime(1.0f);
+	}
+
 
 	// remove dead projectiles from the active deque (oldest projectiles are always at the front)
 	while(true)
@@ -414,8 +425,14 @@ void projectile_movement(int value)
 		if(active_projectiles.size() == 0 || !(active_projectiles.front().is_dead())) break;
 		active_projectiles.pop_front();
 	}
+	while(true)
+	{
+		if(enemy_projectiles.size() == 0 || !(enemy_projectiles.front().is_dead())) break;
+		enemy_projectiles.pop_front();
+	}
 
 	check_projectile_collision();
+	check_enemy_projectile_collision();
 	glutTimerFunc(5, projectile_movement, 3);
 }
 
@@ -451,6 +468,15 @@ void check_projectile_collision()
 	}
 }
 
+void check_enemy_projectile_collision()
+{
+	for(auto&& p : enemy_projectiles)
+	{
+		bool result = p.hitbox.check_collision(player_hitbox);
+		if (result) damage_player();
+	}
+}
+
 // despawn the given enemy and replace it with a new one
 void destroy_enemy(size_t enemy)
 {
@@ -473,6 +499,17 @@ void damage_enemy(size_t enemy)
 	}
 	enemy_invulnerability[enemy] = true;
 	glutTimerFunc(enemy_invulnerability_length, refresh_enemy_invulnerability, enemy);
+}
+
+void game_over()
+{
+	// TODO
+}
+
+void damage_player()
+{
+	player_health -= 25.0f;
+	if(player_health <= 0.0f) game_over();
 }
 
 // value is the number of the enemy to refresh
@@ -539,6 +576,26 @@ void show_projectiles()
 		glTranslatef(x, y, z);
 		glutWireSphere(Projectile::size, 10, 10);
 		glPopMatrix();
+	}
+
+	for(auto&& p : enemy_projectiles)
+	{
+		glColor3f(0.8f, 0.2f, 0.1f);
+		// show projectiles as teapots
+		glPushMatrix();
+		glTranslatef(p.location[0], p.location[1], p.location[2]);
+		glutSolidTeapot(0.05);
+		glPopMatrix();
+
+		// show projectile hitboxes
+		glColor3f(0.0f, 0.9f, 0.1f);
+		glPushMatrix();
+		float x, y, z;
+		p.hitbox.get_pos(x, y, z);
+		glTranslatef(x, y, z);
+		glutWireSphere(Projectile::size, 10, 10);
+		glPopMatrix();
+
 	}
 }
 
