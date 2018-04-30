@@ -66,6 +66,9 @@ const size_t enemy_max_health = 3;
 bool enemy_invulnerability[enemy_count];
 const size_t enemy_invulnerability_length = 500; // in miliseconds
 
+deque<Projectile> enemy_projectiles;
+bool enemy_fire_cooldown[enemy_count];
+
 deque<Projectile> active_projectiles;
 bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
@@ -133,6 +136,7 @@ int main(int argc, char** argv)
 	glutTimerFunc(5, enemy_movement, 2);
 	glutTimerFunc(500, enemy_direction, 1);
 	glutTimerFunc(5, projectile_movement, 3);
+	glutTimerFunc(5, enemy_projectile_movement, 5);
 
 	glutMainLoop();
 
@@ -149,15 +153,13 @@ void init_enemies()
 		enemy_heading[i][1] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 		enemy_health[i] = enemy_max_health;
 		enemy_hitboxes[i] = Hitbox(enemy_x[i], 0, enemy_y[i], enemy_size);
+		enemy_fire_cooldown[i] = false;
 	}
+	enemy_projectiles = deque<Projectile>();
 }
 
 void init_projectiles()
-{
-	/*
-	projectile_location = vector<array<float, 3>>();
-	projectile_heading = vector<array<float, 3>>();
-	*/
+{	
 	active_projectiles = deque<Projectile>();
 }
 
@@ -376,6 +378,24 @@ void enemy_movement(int value)
 		enemy_hitboxes[i].set_pos(enemy_x[i], 0, enemy_y[i]);
 	}
 	glutTimerFunc(5, enemy_movement, 2);
+}
+
+void enemy_fire_projectile(size_t enemy)
+{
+	// TODO
+	
+	// calculate heading from enemy position and player position
+	float px, py, pz;
+	float phx, phy, phz;
+	main_camera.get_pos(px, py, pz);
+	main_camera.get_direction(phx, phy, phz);
+
+}
+
+void enemy_projectile_movement(int value)
+{
+	if(value != 5) return;
+	// TODO: enemy projectiles
 }
 
 void projectile_movement(int value)
