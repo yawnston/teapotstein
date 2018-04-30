@@ -23,6 +23,7 @@ The following are functional:
 
 * Full movement and camera control
 * Shooting and damaging enemies
+* Projectiles with a limited lifetime
 * Hitboxes
 * Lighting and rendering simple objects
 * Random enemy movement
@@ -32,7 +33,6 @@ The following are functional:
 
 * Enemies shooting at the player
 * Enemies moving towards the player and dealing contact damage
-* Despawning old or dead objects (currently enemies and projectiles never disappear)
 * Small visual effects (bullet trails, impact effects)
 * Make the world prettier with more objects
 
