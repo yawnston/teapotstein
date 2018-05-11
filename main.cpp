@@ -1,4 +1,5 @@
 #define _USE_MATH_DEFINES
+#define HITBOX_DEBUG
 
 #include <GL/freeglut.h>
 #include <iostream>
@@ -8,6 +9,7 @@
 #include <vector>
 #include <array>
 #include <deque>
+#include <string>
 
 #include "Camera.h"
 #include "Hitbox.h"
@@ -31,9 +33,14 @@ void grid();
 void floor();
 void enemy_movement(int value);
 void enemy_direction(int value);
+void enemy_shooting(int value);
+void enemy_fire_projectile(int value);
 void projectile_movement(int value);
 void refresh_fire_cooldown(int value);
 void refresh_enemy_invulnerability(int value);
+void refresh_enemy_fire_cooldown(int value);
+void damage_player();
+
 void damage_enemy(size_t enemy);
 void check_projectile_collision();
 void check_enemy_projectile_collision();
@@ -74,11 +81,12 @@ deque<Projectile> active_projectiles;
 bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
 
+bool game_over_state = false;
 const float player_max_health = 200;
 float player_health = player_max_health;
 int player_score = 0;
 Hitbox player_hitbox;
-const float player_hitbox_size = 0.15f;
+const float player_hitbox_size = 0.25f;
 bool player_invulnerability;
 const size_t player_invulnerability_length = 500; // in miliseconds
 
@@ -133,10 +141,19 @@ int main(int argc, char** argv)
 	glutKeyboardUpFunc(keyboard_release_callback);
 	glutIdleFunc(idle_callback);
 
+	// Timer callback values:
+	// 0 - movement timer
+	// 1 - enemy direction
+	// 2 - enemy movement
+	// 3 - projectile movement
+	// 4 - fire cooldown
+	// 5 - enemy shooting
+
 	glutTimerFunc(1, movement_timer_callback, 0);
 	glutTimerFunc(5, enemy_movement, 2);
 	glutTimerFunc(500, enemy_direction, 1);
 	glutTimerFunc(5, projectile_movement, 3);
+	glutTimerFunc(50, enemy_shooting, 5);
 	glutMainLoop();
 
 	return 0;
@@ -370,7 +387,7 @@ void enemy_direction(int value)
 // FIXME: enemies are able to leave the game space
 void enemy_movement(int value)
 {
-	if(value != 2) return;
+	if(value != 2 || game_over_state) return;
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
 		enemy_x[i] += enemy_heading[i][0] * enemy_movement_speed;
@@ -380,32 +397,41 @@ void enemy_movement(int value)
 	glutTimerFunc(5, enemy_movement, 2);
 }
 
-void enemy_fire_projectile(size_t enemy)
+void enemy_shooting(int value)
 {
-	// TODO
-	
+	if (value != 5 || game_over_state) return;
+	for (int i = 0; i < enemy_count; ++i)
+	{
+		if (!enemy_fire_cooldown[i]) enemy_fire_projectile(i);
+	}
+	glutTimerFunc(50, enemy_shooting, 5);
+}
+
+void enemy_fire_projectile(int enemy)
+{
 	// calculate heading from enemy position and player position
 	float px, py, pz;
-	float phx, phy, phz;
 	main_camera.get_pos(px, py, pz);
-	main_camera.get_direction(phx, phy, phz);	
 	// TODO: figure out how enemy x and enemy y translates to x,y,z (y axis will be 0 but maybe x and z are swapped?)
 	float dx, dy, dz;
 	dx = px - enemy_x[enemy];
 	dy = 0;
 	dz = pz - enemy_y[enemy];
 	// normalize direction vector
+	float vec_len = sqrt(dx * dx + dz * dz);
 	float nx, ny, nz;
-	// TODO: normalize
+	nx = dx / vec_len;
+	ny = dy / vec_len;
+	nz = dz / vec_len;
 	
-	enemy_projectiles.push_back(Projectile(enemy_x[enemy], 0.5f, enemy_y[enemy], nx, ny, nz));
+	enemy_projectiles.push_back(Projectile(enemy_x[enemy], 0.0f, enemy_y[enemy], nx, ny, nz));
 	enemy_fire_cooldown[enemy] = true;
-	glutTimerFunc(/*TODO: randomize fire rate for enemies*/, refresh_enemy_fire_cooldown, 5);
+	glutTimerFunc(/*TODO: randomize fire rate for enemies*/10000, refresh_enemy_fire_cooldown, enemy + 64);
 }
 
 void projectile_movement(int value)
 {
-	if(value != 3) return;
+	if(value != 3 || game_over_state) return;
 
 	for(auto&& p : active_projectiles)
 	{
@@ -452,8 +478,14 @@ void fire_projectile()
 
 void refresh_fire_cooldown(int value)
 {
-	if(value != 4) return;	
+	if(value != 4 || game_over_state) return;	
 	fire_cooldown = false;
+}
+
+void refresh_enemy_fire_cooldown(int value)
+{
+	if (value < 64 || value >= (64 + enemy_count)) return;
+	enemy_fire_cooldown[value - 64] = false;
 }
 
 void check_projectile_collision()
@@ -498,24 +530,27 @@ void damage_enemy(size_t enemy)
 		destroy_enemy(enemy);
 	}
 	enemy_invulnerability[enemy] = true;
-	glutTimerFunc(enemy_invulnerability_length, refresh_enemy_invulnerability, enemy);
+	glutTimerFunc(enemy_invulnerability_length, refresh_enemy_invulnerability, enemy + 128);
 }
 
 void game_over()
 {
-	// TODO
+	game_over_state = true;
+	input_fps_mode = false;
+	glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
 }
 
 void damage_player()
 {
-	player_health -= 25.0f;
-	if(player_health <= 0.0f) game_over();
+	if (player_health > 0.0f) player_health -= 25.0f;
+	if (player_health <= 0.0f) game_over();
 }
 
 // value is the number of the enemy to refresh
 void refresh_enemy_invulnerability(int value)
 {
-	enemy_invulnerability[value] = false;
+	if (value < 128 || value >= (128 + enemy_count)) return;
+	enemy_invulnerability[value - 128] = false;
 }
 
 void show_enemies()
@@ -544,12 +579,12 @@ void show_enemies()
 		glPopMatrix();
 	}
 
-#if HITBOX_DEBUG
+#ifdef HITBOX_DEBUG
 	// show player hitbox
 	glColor3f(0.0f, 0.9f, 0.1f);
 	glPushMatrix();
 	float x, y, z;
-	main_camera.get_pos(x, y, z);
+	player_hitbox.get_pos(x, y, z);
 	glTranslatef(x, y, z);
 	glutWireSphere(player_hitbox_size, 10, 10);
 	glPopMatrix();
@@ -685,7 +720,7 @@ void display(void)
 	//check if a second has passed
 	if (currenttime - timebase > 1000)
 	{
-		sprintf(fpscount_buffer, "FPS: %4.2f", frame*1000.0 / (currenttime - timebase));
+		sprintf_s(fpscount_buffer, "FPS: %4.2f", frame*1000.0 / (currenttime - timebase));
 		timebase = currenttime;
 		frame = 0;
 	}
@@ -697,6 +732,7 @@ void display(void)
 	glDisable(GL_LIGHTING);
 	display_text(5, 30, 255, 255, 51, fpscount_buffer);
 	display_text(viewport_width / 2, 30, 255, 255, 51, ("SCORE: " + to_string(player_score)).c_str());
+	if(game_over_state) display_text(viewport_width / 2, viewport_height / 2, 255, 255, 51, ("GAME OVER!"));
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -761,7 +797,8 @@ void keyboard_release_callback(unsigned char key, int x, int y)
 
 void movement_timer_callback(int value)
 {
-	if(value != 0) return;
+	if(value != 0 || game_over_state) return;
+	float x, y, z;
 	if (input_fps_mode)
 	{
 		if (input_keys['w'] || input_keys['W'])
@@ -789,6 +826,8 @@ void movement_timer_callback(int value)
 			main_camera.move_upwards(player_movement_speed);
 		}
 	}
+	main_camera.get_pos(x, y, z);
+	player_hitbox.set_pos(x, y, z);
 
 	glutTimerFunc(1, movement_timer_callback, 0);
 }
