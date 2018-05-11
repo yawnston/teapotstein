@@ -25,6 +25,7 @@ The following are functional:
 * Shooting and damaging enemies
 * Score counter for killing enemies
 * Enemies shooting at the player
+* Player HP & game over state on death
 * Projectiles with a limited lifetime
 * Hitboxes
 * Lighting and rendering simple objects
