@@ -169,7 +169,9 @@ void init_enemies()
 		enemy_heading[i][1] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 		enemy_health[i] = enemy_max_health;
 		enemy_hitboxes[i] = Hitbox(enemy_x[i], 0, enemy_y[i], enemy_size);
-		enemy_fire_cooldown[i] = false;
+		enemy_fire_cooldown[i] = true;
+		glutTimerFunc(2000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (5000)))
+			, refresh_enemy_fire_cooldown, i + 64);
 	}
 	enemy_projectiles = deque<Projectile>();
 }
@@ -412,7 +414,6 @@ void enemy_fire_projectile(int enemy)
 	// calculate heading from enemy position and player position
 	float px, py, pz;
 	main_camera.get_pos(px, py, pz);
-	// TODO: figure out how enemy x and enemy y translates to x,y,z (y axis will be 0 but maybe x and z are swapped?)
 	float dx, dy, dz;
 	dx = px - enemy_x[enemy];
 	dy = 0;
@@ -426,7 +427,9 @@ void enemy_fire_projectile(int enemy)
 	
 	enemy_projectiles.push_back(Projectile(enemy_x[enemy], 0.0f, enemy_y[enemy], nx, ny, nz));
 	enemy_fire_cooldown[enemy] = true;
-	glutTimerFunc(/*TODO: randomize fire rate for enemies*/10000, refresh_enemy_fire_cooldown, enemy + 64);
+	// enemies fire randomly between 5000 and 10000 ms
+	glutTimerFunc(5000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (5000)))
+		, refresh_enemy_fire_cooldown, enemy + 64);
 }
 
 void projectile_movement(int value)
