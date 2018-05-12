@@ -863,7 +863,7 @@ void display()
 	//check if a second has passed
 	if (currenttime - timebase > 1000)
 	{
-		sprintf_s(fpscount_buffer, "FPS: %4.2f", frame*1000.0 / (currenttime - timebase));
+		sprintf(fpscount_buffer, "FPS: %4.2f", frame*1000.0 / (currenttime - timebase));
 		timebase = currenttime;
 		frame = 0;
 	}
