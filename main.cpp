@@ -1,5 +1,5 @@
 #define _USE_MATH_DEFINES
-#define HITBOX_DEBUG
+#undef HITBOX_DEBUG
 
 #include <GL/freeglut.h>
 #include <iostream>
@@ -39,9 +39,11 @@ void projectile_movement(int value);
 void refresh_fire_cooldown(int value);
 void refresh_enemy_invulnerability(int value);
 void refresh_enemy_fire_cooldown(int value);
+void refresh_player_invulnerability(int value);
 void damage_player();
 
 void damage_enemy(size_t enemy);
+void check_enemy_touch_collision();
 void check_projectile_collision();
 void check_enemy_projectile_collision();
 void display_text(float x, float y, unsigned char r, unsigned char g, unsigned char b, const char* string);
@@ -82,7 +84,7 @@ bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
 
 bool game_over_state = false;
-const float player_max_health = 200;
+const float player_max_health = 600;
 float player_health = player_max_health;
 int player_score = 0;
 Hitbox player_hitbox;
@@ -93,7 +95,7 @@ const size_t player_invulnerability_length = 500; // in miliseconds
 // Movement settings
 const float player_movement_speed = 0.05f;
 const float player_turn_speed = (float)M_PI / 180 * 0.2f;
-const float enemy_movement_speed = 0.05f;
+const float enemy_movement_speed = 0.01f;
 
 int frame = 0, time_elapsed = 0, timebase = 0;
 char fpscount_buffer[32];
@@ -148,6 +150,7 @@ int main(int argc, char** argv)
 	// 3 - projectile movement
 	// 4 - fire cooldown
 	// 5 - enemy shooting
+	// 6 - player invulnerability
 
 	glutTimerFunc(1, movement_timer_callback, 0);
 	glutTimerFunc(5, enemy_movement, 2);
@@ -164,13 +167,14 @@ void init_enemies()
 	srand((size_t)time(NULL)); // seed generator
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
-		enemy_x[i] = enemy_y[i] = (float)i;
+		enemy_x[i] = -floor_size + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (floor_size * 2)));
+		enemy_y[i] = -floor_size + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (floor_size * 2)));
 		enemy_heading[i][0] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 		enemy_heading[i][1] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 		enemy_health[i] = enemy_max_health;
 		enemy_hitboxes[i] = Hitbox(enemy_x[i], 0, enemy_y[i], enemy_size);
 		enemy_fire_cooldown[i] = true;
-		glutTimerFunc(2000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (5000)))
+		glutTimerFunc((size_t)(2000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (5000))))
 			, refresh_enemy_fire_cooldown, i + 64);
 	}
 	enemy_projectiles = deque<Projectile>();
@@ -380,8 +384,22 @@ void enemy_direction(int value)
 	if(value != 1) return;
 	for (size_t i = 0; i < enemy_count; ++i)
 	{
+		/*
 		enemy_heading[i][0] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 		enemy_heading[i][1] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
+		*/
+		float px, py, pz;
+		main_camera.get_pos(px, py, pz);
+		float dx, dz;
+		dx = px - enemy_x[i];
+		dz = pz - enemy_y[i];
+		// normalize direction vector
+		float vec_len = sqrt(dx * dx + dz * dz);
+		float nx, nz;
+		nx = dx / vec_len;
+		nz = dz / vec_len;
+		enemy_heading[i][0] = nx;
+		enemy_heading[i][1] = nz;
 	}
 	glutTimerFunc(500, enemy_direction, 1);
 }
@@ -396,6 +414,7 @@ void enemy_movement(int value)
 		enemy_y[i] += enemy_heading[i][1] * enemy_movement_speed;
 		enemy_hitboxes[i].set_pos(enemy_x[i], 0, enemy_y[i]);
 	}
+	check_enemy_touch_collision();
 	glutTimerFunc(5, enemy_movement, 2);
 }
 
@@ -428,7 +447,7 @@ void enemy_fire_projectile(int enemy)
 	enemy_projectiles.push_back(Projectile(enemy_x[enemy], 0.0f, enemy_y[enemy], nx, ny, nz));
 	enemy_fire_cooldown[enemy] = true;
 	// enemies fire randomly between 5000 and 10000 ms
-	glutTimerFunc(5000 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (5000)))
+	glutTimerFunc(5000 + (size_t)(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (5000))))
 		, refresh_enemy_fire_cooldown, enemy + 64);
 }
 
@@ -491,6 +510,15 @@ void refresh_enemy_fire_cooldown(int value)
 	enemy_fire_cooldown[value - 64] = false;
 }
 
+void check_enemy_touch_collision()
+{
+	for (auto&& e : enemy_hitboxes)
+	{
+		bool result = e.check_collision(player_hitbox);
+		if (result) damage_player();
+	}
+}
+
 void check_projectile_collision()
 {
 	for(auto&& p : active_projectiles)
@@ -516,7 +544,8 @@ void check_enemy_projectile_collision()
 void destroy_enemy(size_t enemy)
 {
 	srand((size_t)time(NULL)); // seed generator
-	enemy_x[enemy] = enemy_y[enemy] = (float)enemy; // FIXME: generate random position to spawn
+	enemy_x[enemy] = -floor_size + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (floor_size * 2)));
+	enemy_y[enemy] = -floor_size + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (floor_size * 2)));
 	enemy_heading[enemy][0] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 	enemy_heading[enemy][1] = -1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2)));
 	enemy_health[enemy] = enemy_max_health;
@@ -545,8 +574,17 @@ void game_over()
 
 void damage_player()
 {
+	if (player_invulnerability) return;
 	if (player_health > 0.0f) player_health -= 25.0f;
 	if (player_health <= 0.0f) game_over();
+	player_invulnerability = true;
+	glutTimerFunc(player_invulnerability_length, refresh_player_invulnerability, 6);
+}
+
+void refresh_player_invulnerability(int value)
+{
+	if (value != 6) return;
+	player_invulnerability = false;
 }
 
 // value is the number of the enemy to refresh
@@ -733,9 +771,9 @@ void display(void)
 	glPushMatrix();
 	glLoadIdentity();
 	glDisable(GL_LIGHTING);
-	display_text(5, 30, 255, 255, 51, fpscount_buffer);
-	display_text(viewport_width / 2, 30, 255, 255, 51, ("SCORE: " + to_string(player_score)).c_str());
-	if(game_over_state) display_text(viewport_width / 2, viewport_height / 2, 255, 255, 51, ("GAME OVER!"));
+	display_text(5.0f, 30.0f, 255, 255, 51, fpscount_buffer);
+	display_text(viewport_width / 2.0f, 30.0f, 255, 255, 51, ("SCORE: " + to_string(player_score)).c_str());
+	if(game_over_state) display_text(viewport_width / 2.0f, viewport_height / 2.0f, 255, 255, 51, ("GAME OVER!"));
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
 

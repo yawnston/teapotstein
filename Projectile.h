@@ -13,7 +13,7 @@ public:
 
 	static constexpr float movement_speed = 0.09f;
 	static constexpr float size = 0.05f;
-	static constexpr float max_lifetime = 500.0f;
+	static constexpr float max_lifetime = 300.0f;
 
 	void decrease_lifetime(float d)
 	{
