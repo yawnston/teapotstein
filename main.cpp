@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "Hitbox.h"
 #include "Projectile.h"
+#include "Particle.h"
 
 using namespace std;
 
@@ -28,6 +29,7 @@ void idle_callback();
 
 void init_enemies();
 void init_projectiles();
+void init_particles();
 void init_floor();
 void grid();
 void floor();
@@ -83,6 +85,8 @@ deque<Projectile> active_projectiles;
 bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
 
+deque<Particle> active_particles;
+
 bool game_over_state = false;
 const float player_max_health = 600;
 float player_health = player_max_health;
@@ -120,6 +124,7 @@ int main(int argc, char** argv)
 	glEnd();
 	glEnable(GL_COLOR_MATERIAL);
 	glShadeModel(GL_SMOOTH);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -129,6 +134,7 @@ int main(int argc, char** argv)
 
 	init_enemies();
 	init_projectiles();
+	init_particles();
 	init_floor();
 
 	glutIgnoreKeyRepeat(1);
@@ -183,6 +189,11 @@ void init_enemies()
 void init_projectiles()
 {	
 	active_projectiles = deque<Projectile>();
+}
+
+void init_particles()
+{
+	active_particles = deque<Particle>();
 }
 
 void init_player()
@@ -451,12 +462,29 @@ void enemy_fire_projectile(int enemy)
 		, refresh_enemy_fire_cooldown, enemy + 64);
 }
 
+void particle_update()
+{
+	for (auto&& p : active_particles)
+	{
+		p.decrease_lifetime(1.0f);
+	}
+	while (true)
+	{
+		if (active_particles.size() == 0 || !(active_particles.front().is_dead())) break;
+		active_particles.pop_front();
+	}
+}
+
 void projectile_movement(int value)
 {
 	if(value != 3 || game_over_state) return;
 
 	for(auto&& p : active_projectiles)
 	{
+		// spawn a bullet trail particle
+		active_particles.emplace_back(p.location[0], p.location[1], p.location[2],
+			0.03f, 5.0f,
+			0.2f, 0.1f, 0.8f);
 		p.move();
 		p.decrease_lifetime(1.0f);
 	}
@@ -479,6 +507,7 @@ void projectile_movement(int value)
 		enemy_projectiles.pop_front();
 	}
 
+	particle_update();
 	check_projectile_collision();
 	check_enemy_projectile_collision();
 	glutTimerFunc(5, projectile_movement, 3);
@@ -609,8 +638,8 @@ void show_enemies()
 		glutSolidTeapot(enemy_size);
 		glPopMatrix();
 
+#ifdef HITBOX_DEBUG
 		// show enemy hitboxes
-
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
 		float x, y, z;
@@ -618,6 +647,7 @@ void show_enemies()
 		glTranslatef(x, y, z);
 		glutWireSphere(enemy_size, 10, 10);
 		glPopMatrix();
+#endif
 	}
 
 #ifdef HITBOX_DEBUG
@@ -644,6 +674,7 @@ void show_projectiles()
 		glutSolidTeapot(0.05);
 		glPopMatrix();
 
+#ifdef HITBOX_DEBUG
 		// show projectile hitboxes
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
@@ -652,6 +683,7 @@ void show_projectiles()
 		glTranslatef(x, y, z);
 		glutWireSphere(Projectile::size, 10, 10);
 		glPopMatrix();
+#endif
 	}
 
 	for(auto&& p : enemy_projectiles)
@@ -663,6 +695,7 @@ void show_projectiles()
 		glutSolidTeapot(0.05);
 		glPopMatrix();
 
+#ifdef HITBOX_DEBUG
 		// show projectile hitboxes
 		glColor3f(0.0f, 0.9f, 0.1f);
 		glPushMatrix();
@@ -671,7 +704,20 @@ void show_projectiles()
 		glTranslatef(x, y, z);
 		glutWireSphere(Projectile::size, 10, 10);
 		glPopMatrix();
+#endif
+	}
+}
 
+void show_particles()
+{
+	for (auto&& p : active_particles)
+	{
+		if (p.is_dead()) continue;
+		glColor4f(p.color[0], p.color[1], p.color[2], p.get_alpha());
+		glPushMatrix();
+		glTranslatef(p.location[0], p.location[1], p.location[2]);
+		glutSolidTeapot(p.size);
+		glPopMatrix();
 	}
 }
 
@@ -753,6 +799,7 @@ void display(void)
 	trees();
 	show_enemies();
 	show_projectiles();
+	show_particles();
 	display_hud();
 
 	//calculate the frames per second
