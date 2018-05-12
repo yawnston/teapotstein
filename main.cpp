@@ -43,6 +43,7 @@ void refresh_enemy_invulnerability(int value);
 void refresh_enemy_fire_cooldown(int value);
 void refresh_player_invulnerability(int value);
 void damage_player();
+void game_over();
 
 void damage_enemy(size_t enemy);
 void check_enemy_touch_collision();
@@ -594,6 +595,15 @@ void damage_enemy(size_t enemy)
 	glutTimerFunc(enemy_invulnerability_length, refresh_enemy_invulnerability, enemy + 128);
 }
 
+// if the player is out of bounds, they lose
+void check_player_oob()
+{
+	float x, y, z; main_camera.get_pos(x, y, z);
+	bool result = (x < -floor_size - 1 || x > floor_size)
+		|| (z < -floor_size - 1 || z > floor_size);
+	if (result) game_over();
+}
+
 void game_over()
 {
 	game_over_state = true;
@@ -916,6 +926,7 @@ void movement_timer_callback(int value)
 	}
 	main_camera.get_pos(x, y, z);
 	player_hitbox.set_pos(x, y, z);
+	check_player_oob();
 
 	glutTimerFunc(1, movement_timer_callback, 0);
 }
