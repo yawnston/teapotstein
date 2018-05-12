@@ -87,6 +87,8 @@ bool fire_cooldown = false;
 const size_t fire_rate = 500; // in miliseconds
 
 deque<Particle> active_particles;
+deque<Projectile> active_sparks;
+const float spark_lifetime = 20;
 
 bool game_over_state = false;
 const float player_max_health = 600;
@@ -195,6 +197,7 @@ void init_projectiles()
 void init_particles()
 {
 	active_particles = deque<Particle>();
+	active_sparks = deque<Projectile>();
 }
 
 void init_player()
@@ -469,11 +472,37 @@ void particle_update()
 	{
 		p.decrease_lifetime(1.0f);
 	}
+	for (auto&& s : active_sparks)
+	{
+		s.move();
+		s.decrease_lifetime(1.0f);
+	}
 	while (true)
 	{
 		if (active_particles.size() == 0 || !(active_particles.front().is_dead())) break;
 		active_particles.pop_front();
 	}
+	while (true)
+	{
+		if (active_sparks.size() == 0 || !(active_sparks.front().is_dead())) break;
+		active_sparks.pop_front();
+	}
+}
+
+void projectile_floor_collision(float x, float z)
+{
+	active_sparks.emplace_back(x, -0.5f, z,
+		0.707f, 0.707f, 0.0f);
+	active_sparks.back().set_lifetime(spark_lifetime);
+	active_sparks.emplace_back(x, -0.5f, z,
+		-0.707f, 0.707f, 0.0f);
+	active_sparks.back().set_lifetime(spark_lifetime);
+	active_sparks.emplace_back(x, -0.5f, z,
+		0.0f, 0.707f, 0.707f);
+	active_sparks.back().set_lifetime(spark_lifetime);
+	active_sparks.emplace_back(x, -0.5f, z,
+		0.0f, 0.707f, -0.707f);
+	active_sparks.back().set_lifetime(spark_lifetime);
 }
 
 void projectile_movement(int value)
@@ -487,6 +516,12 @@ void projectile_movement(int value)
 			0.03f, 5.0f,
 			0.2f, 0.1f, 0.8f);
 		p.move();
+		// if the bullet hit the ground, spawn some special effects
+		if (p.location[1] <= -0.5f && !p.hit_floor)
+		{
+			p.hit_floor = true;
+			projectile_floor_collision(p.location[0], p.location[2]);
+		}
 		p.decrease_lifetime(1.0f);
 	}
 	for(auto&& p : enemy_projectiles)
@@ -727,6 +762,15 @@ void show_particles()
 		glPushMatrix();
 		glTranslatef(p.location[0], p.location[1], p.location[2]);
 		glutSolidTeapot(p.size);
+		glPopMatrix();
+	}
+
+	for (auto&& p : active_sparks)
+	{
+		glColor3f(0.992f, 0.952f, 0.247f); // yellow
+		glPushMatrix();
+		glTranslatef(p.location[0], p.location[1], p.location[2]);
+		glutSolidTeapot(0.01);
 		glPopMatrix();
 	}
 }

@@ -10,10 +10,16 @@ public:
 	Hitbox hitbox;
 	std::array<float, 3> location;
 	std::array<float, 3> heading;
+	bool hit_floor = false;
 
 	static constexpr float movement_speed = 0.09f;
 	static constexpr float size = 0.05f;
 	static constexpr float max_lifetime = 100.0f;
+
+	void set_lifetime(float l)
+	{
+		lifetime_ = l;
+	}
 
 	void decrease_lifetime(float d)
 	{
@@ -47,7 +53,6 @@ public:
 
 private:
 	float lifetime_;
-
 
 };
 
