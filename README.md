@@ -25,6 +25,7 @@ The following are functional:
 * Shooting and damaging enemies
 * Score counter for killing enemies
 * Enemies shooting at the player
+* Enemies moving towards the player and dealing contact damage
 * Player HP & game over state on death
 * Projectiles with a limited lifetime
 * Hitboxes
@@ -34,7 +35,6 @@ The following are functional:
 
 ## TODO list
 
-* Enemies moving towards the player and dealing contact damage
 * Small visual effects (bullet trails, impact effects)
 * Make the world prettier with more objects
 
