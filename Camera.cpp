@@ -59,13 +59,12 @@ void Camera::get_direction(float& x, float& y, float& z)
 	z = dir_z;
 }
 
-// TODO: movement speed independent of camera angle?
 void Camera::move_forward(float incr)
 {
 	float movement_x = cos(yaw)*cos(pitch);
 	float movement_z = sin(yaw)*cos(pitch);
 
-	// uncomment this to enable flying
+	// uncomment this to enable flying with WASD (enemies don't know how to take this into account! use with caution)
 	//float movement_y = sin(m_pitch);
 	//pos_y = pos_y + incr*movement_y;
 

@@ -225,6 +225,7 @@ void init_floor()
 	}
 }
 
+// debugging grid to help visualize coordinates
 void grid()
 {
 	glPushMatrix();
@@ -419,7 +420,6 @@ void enemy_direction(int value)
 	glutTimerFunc(500, enemy_direction, 1);
 }
 
-// FIXME: enemies are able to leave the game space
 void enemy_movement(int value)
 {
 	if(value != 2 || game_over_state) return;
@@ -805,6 +805,7 @@ void display_hud()
 	const float barHeight = 75.0f / (float)numDiv;
 	glBegin(GL_QUADS);
 	glColor3f(1, 0, 0);
+	// draw player HP bars
 	for (float i = 0; i < player_health; i += (sep + barHeight))
 	{
 		glVertex2f((float)(viewport_width - 80), (float)(i));
@@ -836,7 +837,7 @@ void restore_perspective_projection()
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void display(void)
+void display()
 {
 	glClearColor(0.0, 0.0, 0.0, 1.0); //black
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
