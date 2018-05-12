@@ -91,7 +91,7 @@ deque<Projectile> active_sparks;
 const float spark_lifetime = 20;
 
 bool game_over_state = false;
-const float player_max_health = 600;
+const float player_max_health = 150;
 float player_health = player_max_health;
 int player_score = 0;
 Hitbox player_hitbox;
