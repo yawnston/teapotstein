@@ -14,7 +14,7 @@ OpenGL, GLU and Freeglut are required
 * WASD to move around
 * Mouse to look around
 * Left click to shoot
-* Right click to fly (debugging feature, not part of gameplay)
+* Right click to fly (debugging feature, not part of gameplay! enemies get very confused by the player flying)
 * ESC to close the game
 
 ## Gameplay
